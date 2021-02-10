@@ -24,29 +24,32 @@ time to do it.
 We need the new spatstat packages:
 
 ``` r
+need_pkgs <- c("remotes", "spatstat.geom", "spatstat.core", "spatstat.linnet")
 inst_pkgs <- rownames(installed.packages())
-if(!is.element("spatstat.geom", inst_pkgs)){
-  install.packages("spatstat.geom")
+miss_pkgs <- setdiff(need_pkgs, inst_pkgs)
+if(length(miss_pkgs)>0){
+  install.packages(miss_pkgs)
 }
-if(!is.element("spatstat.core", inst_pkgs)){
-  install.packages("spatstat.core")
-}
-if(!is.element("spatstat.linnet", inst_pkgs)){
-  remotes::install_github("spatstat/spatstat.linnet")
-}
+remotes::install_github("baddstats/spatstat")
 ```
 
-Directories used under local directory (the one you cloned in or created
-yourself):
+    ## Using github PAT from envvar GITHUB_PAT
 
-  - `downloads`: Where the tarball of the source code lives.
-  - `sources`: Where the original source code of the package(s) to be
+    ## Skipping install of 'spatstat' from a github remote, the SHA1 (578a1b70) has not changed since last install.
+    ##   Use `force = TRUE` to force installation
+
+Directories used under local directory (the one you cloned into or
+created yourself – **make sure you run the code with this as working
+directory**):
+
+-   `downloads`: Where the tarball of the source code lives.
+-   `sources`: Where the original source code of the package(s) to be
     updated lives (unpacked from `downloads` in my example).
-  - `updates`: Where the generated updated source code live.
-  - `builds`: Where the new builds of updated sources live.
-  - `checks_original`: Where check results for the original package live
+-   `updates`: Where the generated updated source code live.
+-   `builds`: Where the new builds of updated sources live.
+-   `checks_original`: Where check results for the original package live
     (not used here).
-  - `checks_updates`: Where check results for the updated package live
+-   `checks_updates`: Where check results for the updated package live
     (not used here).
 
 A few global variables are used:
@@ -54,6 +57,7 @@ A few global variables are used:
 ``` r
 DIR <- getwd()
 DEPENDS <- tools::package_dependencies("spatstat", which = "Depends", reverse = TRUE)$spatstat
+IMPORTS <- tools::package_dependencies("spatstat", which = "Imports", reverse = TRUE)$spatstat
 ```
 
 ## Example usage
@@ -62,15 +66,6 @@ We will use `ppmlasso` as an example of how to update the sources:
 
 ``` r
 pkg <- "ppmlasso"
-```
-
-If your package `Depends` on spatstat we also need the new umbrella
-spatstat installed :
-
-``` r
-if(pkg %in% DEPENDS && packageVersion("spatstat") < "1.65"){
-  remotes::install_github("baddstats/spatstat")
-}
 ```
 
 Source the helper functions:

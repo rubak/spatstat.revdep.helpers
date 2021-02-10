@@ -165,25 +165,19 @@ fix_namespace <- function(pkg){
     print(paste0(filename, ": line ", ii, ": ", spst))
     for(j in seq_along(spst)){
       if(grepl('"spatstat"', spst[j])){
-        if(pkg %in% DEPENDS){
-          spst[j] <- sub('"spatstat"', '"spatstat.geom", "spatstat.core", "spatstat.linnet", "spatstat"', spst[j])
-        } else{
-          spst[j] <- sub('"spatstat"', '"spatstat.geom", "spatstat.core", "spatstat.linnet"', spst[j])
-        }
+        spst[j] <- sub('"spatstat"', '"spatstat.geom", "spatstat.core", "spatstat.linnet", "spatstat"', spst[j])
       } else{
-        if(pkg %in% DEPENDS){
-          spst[j] <- gsub("spatstat,", "spatstat.geom,spatstat.core,spatstat.linnet,spatstat,", spst[j], fixed = TRUE)
-          spst[j] <- gsub(",spatstat)", ",spatstat.geom,spatstat.core,spatstat.linnet,spatstat)", spst[j], fixed = TRUE)
-          spst[j] <- gsub("(spatstat)", "(spatstat.geom,spatstat.core,spatstat.linnet,spatstat)", spst[j], fixed = TRUE)
-        } else{
-          spst[j] <- gsub("spatstat,", "spatstat.geom,spatstat.core,spatstat.linnet,", spst[j], fixed = TRUE)
-          spst[j] <- gsub(",spatstat)", ",spatstat.geom,spatstat.core,spatstat.linnet)", spst[j], fixed = TRUE)
-          spst[j] <- gsub("(spatstat)", "(spatstat.geom,spatstat.core,spatstat.linnet)", spst[j], fixed = TRUE)
-        }
+        spst[j] <- gsub("spatstat,", "spatstat.geom,spatstat.core,spatstat.linnet,spatstat,", spst[j], fixed = TRUE)
+        spst[j] <- gsub(",spatstat)", ",spatstat.geom,spatstat.core,spatstat.linnet,spatstat)", spst[j], fixed = TRUE)
+        spst[j] <- gsub("(spatstat)", "(spatstat.geom,spatstat.core,spatstat.linnet,spatstat)", spst[j], fixed = TRUE)
       }
     }
     lines[ii] <- spst
     writeLines(lines, filename)
+  } else{
+    if(pkg %in% c(DEPENDS, IMPORTS)){
+      cat("import(spatstat)", file = filename, append = TRUE)
+    }
   }
 }
 
@@ -198,11 +192,7 @@ fix_roxygen <- function(pkg){
     ## Pure imports first:
     import <- grep("@import spatstat", lines, fixed = TRUE)
     if(length(import)>0){
-      if(pkg %in% DEPENDS){
-        lines[import] <- gsub("@import spatstat", "@import spatstat.geom spatstat.core spatstat.linnet spatstat", lines[import])
-      } else{
-        lines[import] <- gsub("@import spatstat", "@import spatstat.geom spatstat.core spatstat.linnet", lines[import])
-      }
+      lines[import] <- gsub("@import spatstat", "@import spatstat.geom spatstat.core spatstat.linnet spatstat", lines[import])
     }
     ## Now importFrom:
     importFrom <- grep("@importFrom spatstat ", lines, fixed = TRUE)
@@ -254,7 +244,7 @@ fix_description <- function(pkg){
     desc <- gsub("'spatstat.R'", "SPST.R_QUOTE", desc, fixed = TRUE)
     j <- which(grepl("spatstat", desc) & !grepl("Package|Title|Description|BugReports", desc))
     if(pkg %in% DEPENDS){
-      desc[j] <- gsub("spatstat", "spatstat.geom, spatstat.core, spatstat.linnet, spatstat", desc[j], fixed = TRUE)
+      desc[j] <- gsub("spatstat", "spatstat.geom, spatstat.core, spatstat.linnet, spatstat (>= 2.0-0)", desc[j], fixed = TRUE)
     } else{
       geom <- system(paste0('grep -lFr "spatstat.geom" ', DIR, '/updates/', pkg), intern = TRUE)
       core <- system(paste0('grep -lFr "spatstat.core" ', DIR, '/updates/', pkg), intern = TRUE)
@@ -263,7 +253,7 @@ fix_description <- function(pkg){
       if(length(core)>0) core <- "spatstat.core"
       if(length(linnet)>0) linnet <- "spatstat.linnet"
       if(pkg=="sf") linnet <- "spatstat.linnet"
-      spst_string <- paste(c(geom, core, linnet), collapse = ", ")
+      spst_string <- paste(c(geom, core, linnet, "spatstat (>= 2.0-0)"), collapse = ", ")
       desc[j] <- gsub("spatstat", spst_string, desc[j], fixed = TRUE)
     }
     desc <- gsub("SPST_UTILS", "spatstat.utils", desc)
@@ -275,10 +265,6 @@ fix_description <- function(pkg){
     }
   }
   writeLines(desc, f)
-  if(pkg=="sf"){
-    cat("Remotes: spatstat/spatstat.utils, spatstat/spatstat.geom, spatstat/spatstat.core, baddstats/spatstat.linnet", 
-        file = f, append = TRUE)
-  }
 }
 
 fix_pkg_loading <- function(pkg){
@@ -303,14 +289,6 @@ fix_pkg_loading <- function(pkg){
     if(pkg == "stars"){
       code <- gsub('library(spatstat.core)', 'library(spatstat.geom)', code, fixed = TRUE)
       code <- gsub('requireNamespace("spatstat.core",', 'requireNamespace("spatstat.geom",', code, fixed = TRUE)
-    }
-    if(pkg == "sf"){
-      code <- gsub('require(spatstat.core', 'require(spatstat.linnet', code, fixed = TRUE)
-      code <- gsub('requireNamespace("spatstat.core",', 'requireNamespace("spatstat.linnet",', code, fixed = TRUE)
-    }
-    if(pkg == "maptools"){
-      code <- gsub('require(spatstat.core', 'require(spatstat.linnet', code, fixed = TRUE)
-      code <- gsub('requireNamespace("spatstat.core",', 'requireNamespace("spatstat.linnet",', code, fixed = TRUE)
     }
     writeLines(code, files[i])
   } 

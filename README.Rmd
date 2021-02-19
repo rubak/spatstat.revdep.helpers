@@ -19,13 +19,13 @@ do it unless I get specific requests and have time to do it.
 
 We need the new spatstat packages:
 ```{r}
-need_pkgs <- c("remotes", "spatstat.geom", "spatstat.core", "spatstat.linnet")
+need_pkgs <- c("spatstat.geom", "spatstat.core", "spatstat.linnet")
 inst_pkgs <- rownames(installed.packages())
 miss_pkgs <- setdiff(need_pkgs, inst_pkgs)
 if(length(miss_pkgs)>0){
-  install.packages(miss_pkgs)
+  install.packages(miss_pkgs, repos = "https://spatstat.r-universe.dev")
 }
-remotes::install_github("baddstats/spatstat")
+install.packages("spatstat", repos = "https://spatstat.r-universe.dev")
 ```
 
 

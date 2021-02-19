@@ -243,8 +243,18 @@ fix_description <- function(pkg){
     desc <- gsub("'spatstat'", "SPST_QUOTE", desc, fixed = TRUE)
     desc <- gsub("'spatstat.R'", "SPST.R_QUOTE", desc, fixed = TRUE)
     j <- which(grepl("spatstat", desc) & !grepl("Package|Title|Description|BugReports", desc))
+    if(length(j)>1) stop("multiple spatstat lines found in DESCRIPTION. Please check.")
     if(pkg %in% DEPENDS){
-      desc[j] <- gsub("spatstat", "spatstat.geom, spatstat.core, spatstat.linnet, spatstat (>= 2.0-0)", desc[j], fixed = TRUE)
+      desc[j] <- gsub("spatstat", "spatstat (>= 2.0-0)", desc[j], fixed = TRUE)
+      imp_line <- grep("^Imports:", desc)
+      if(length(imp_line)>0){
+        desc[imp_line] <- gsub("Imports:", 
+                               "Imports: spatstat.geom, spatstat.core, spatstat.linnet,",
+                               desc[imp_line])
+      } else{
+        desc <- c(desc,
+                  "Imports: spatstat.geom, spatstat.core, spatstat.linnet")
+      }
     } else{
       geom <- system(paste0('grep -lFr "spatstat.geom" ', DIR, '/updates/', pkg), intern = TRUE)
       core <- system(paste0('grep -lFr "spatstat.core" ', DIR, '/updates/', pkg), intern = TRUE)
